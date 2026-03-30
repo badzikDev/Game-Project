@@ -39,10 +39,7 @@ public class HerniEngine
             string jmeno = Console.ReadLine();
             hrac = new Hrac(jmeno);
         }
-        else
-        {
-            hrac = nactenyHrac;
-        }
+        else hrac = nactenyHrac;
 
         HlavniSmycka();
     }
@@ -57,6 +54,7 @@ public class HerniEngine
             Console.WriteLine("1. Jít bojovat");
             Console.WriteLine("2. Inventář");
             Console.WriteLine("3. Uložit a odejít");
+            Console.WriteLine("4. Odejít bez uložení");
             Console.Write("\nVolba: ");
 
             string volba = Console.ReadLine();
@@ -65,15 +63,20 @@ public class HerniEngine
                 case "1": Boj(); break;
                 case "2": Inventar(); break;
                 case "3": Ulozit(); hrajeme = false; break;
+                case "4": 
+                    Console.Write("Opravdu odejít bez uložení? (a/n): ");
+                    if (Console.ReadLine().ToLower() == "a") hrajeme = false;
+                    break;
             }
         }
     }
 
     private void Boj()
     {
-        int nepritelHP = 30 + (hrac.Level * 10);
+        int maxNepritelHP = 30 + (hrac.Level * 10);
+        int nepritelHP = maxNepritelHP;
         int nepritelUtok = 5 + (hrac.Level * 2);
-        string[] nepratele = { "Vlk", "Skřet", "Zloděj" };
+        string[] nepratele = { "Vlk", "Skřet", "Zloděj", "Temný rytíř" };
         string jmenoNepritele = nepratele[rnd.Next(nepratele.Length)];
 
         Console.Clear();
@@ -85,40 +88,53 @@ public class HerniEngine
             Console.WriteLine("1. Útok | 2. Obrana");
             string akce = Console.ReadLine();
 
+            bool hracSeBrani = (akce == "2");
+            bool nepritelSeBrani = (nepritelHP < (maxNepritelHP * 0.3) && rnd.Next(100) < 50);
+
             if (akce == "1")
             {
                 int dmg = rnd.Next(hrac.Utok - 5, hrac.Utok + 5);
+                if (nepritelSeBrani) dmg /= 3;
                 nepritelHP -= dmg;
                 Console.WriteLine($"Zasáhl jsi {jmenoNepritele} za {dmg} poškození!");
-            }
-            else
-            {
-                Console.WriteLine("Zaujal jsi obranou pozici.");
             }
 
             if (nepritelHP > 0)
             {
-                int dmgNepritel = rnd.Next(nepritelUtok - 2, nepritelUtok + 2);
-                if (akce == "2") dmgNepritel /= 2;
-                hrac.Zdravi -= dmgNepritel;
-                Console.WriteLine($"{jmenoNepritele} tě zasáhl za {dmgNepritel}!");
+                if (!nepritelSeBrani)
+                {
+                    int dmgNepritel = rnd.Next(nepritelUtok - 2, nepritelUtok + 2);
+                    if (hracSeBrani)
+                    {
+                        dmgNepritel /= 3;
+                        Console.WriteLine($"Vykryl jsi útok! (Jen {dmgNepritel} dmg)");
+                        if (rnd.Next(100) < 70)
+                        {
+                            int protidmg = hrac.Utok / 2;
+                            nepritelHP -= protidmg;
+                            Console.WriteLine($"PROTIÚTOK za {protidmg}!");
+                        }
+                    }
+                    hrac.Zdravi -= dmgNepritel;
+                    if (!hracSeBrani) Console.WriteLine($"{jmenoNepritele} tě zasáhl za {dmgNepritel}!");
+                }
+                else Console.WriteLine($"{jmenoNepritele} se brání.");
             }
 
             if (hrac.Zdravi <= 0)
             {
-                Console.WriteLine("\nByl jsi poražen...");
+                Console.WriteLine("\nZemřel jsi...");
                 Thread.Sleep(2000);
-                Environment.Exit(0);
+                return;
             }
         }
 
         if (nepritelHP <= 0)
         {
             int loot = 15 + (hrac.Level * 5);
-            int xp = 25;
             hrac.Penize += loot;
-            hrac.Zkusenosti += xp;
-            Console.WriteLine($"\nZvítězil jsi! Získal jsi {loot} peněz a {xp} zkušeností.");
+            hrac.Zkusenosti += 25;
+            Console.WriteLine($"\nVítězství! +{loot} peněz.");
             if (hrac.Zkusenosti >= 100) LevelUp();
         }
         Console.ReadKey();
@@ -131,15 +147,14 @@ public class HerniEngine
         hrac.MaxZdravi += 20;
         hrac.Zdravi = hrac.MaxZdravi;
         hrac.Utok += 5;
-        Console.WriteLine("\nLEVEL UP! Tvé statistiky se zvýšily.");
+        Console.WriteLine("LEVEL UP!");
     }
 
     private void Inventar()
     {
         Console.Clear();
-        Console.WriteLine("Tvůj inventář:");
-        foreach (var vec in hrac.Inventar) Console.WriteLine("- " + vec);
-        Console.WriteLine("\nStiskni klávesu...");
+        Console.WriteLine("Inventář:");
+        hrac.Inventar.ForEach(v => Console.WriteLine("- " + v));
         Console.ReadKey();
     }
 
@@ -148,6 +163,7 @@ public class HerniEngine
         string json = JsonSerializer.Serialize(hrac);
         File.WriteAllText(savePath, json);
         Console.WriteLine("Hra uložena.");
+        Thread.Sleep(1000);
     }
 }
 
@@ -158,46 +174,23 @@ public class StartMenu
     public void ShowMenu()
     {
         Console.Clear(); 
-        Console.WriteLine("=== MOJE RPG HRA ===");
+        Console.WriteLine("=== RPG HRA ===");
         Console.WriteLine("1. New Game");
         Console.WriteLine("2. Load Save"); 
         Console.WriteLine("3. Exit");
-        Console.Write("\nVyberte akci: ");
+        Console.Write("\nVolba: ");
         
         string choice = Console.ReadLine();
         HerniEngine engine = new HerniEngine();
 
-        switch (choice)
-        {
-            case "1":
-                engine.Spustit();
-                ShowMenu();
-                break;
-            case "2":
-                LoadSave(engine);
-                break;
-            case "3":
-                Environment.Exit(0);
-                break;
-            default:
-                ShowMenu();
-                break;
-        }
-    }
-
-    void LoadSave(HerniEngine engine)
-    {
-        if (File.Exists(saveFilePath))
+        if (choice == "1") engine.Spustit();
+        else if (choice == "2" && File.Exists(saveFilePath))
         {
             string json = File.ReadAllText(saveFilePath);
-            Hrac nacteny = JsonSerializer.Deserialize<Hrac>(json);
-            engine.Spustit(nacteny);
+            engine.Spustit(JsonSerializer.Deserialize<Hrac>(json));
         }
-        else 
-        {
-            Console.WriteLine("No save file found.");
-            Console.ReadKey();
-        }
+        else if (choice == "3") Environment.Exit(0);
+        
         ShowMenu();
     }
 }
@@ -206,7 +199,6 @@ class Program
 {
     static void Main(string[] args)
     {
-        StartMenu menu = new StartMenu();
-        menu.ShowMenu();
+        new StartMenu().ShowMenu();
     }
 }
