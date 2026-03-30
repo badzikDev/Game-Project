@@ -1,8 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "TaKwdmRhFK8=",
+  "dgSpecHash": "OzBvL5PBY8E=",
   "success": true,
   "projectFilePath": "/home/adam/RiderProjects/Game Project/Game Project/Game Project.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "/home/adam/.nuget/packages/microsoft.netcore.app.ref/9.0.11/microsoft.netcore.app.ref.9.0.11.nupkg.sha512",
+    "/home/adam/.nuget/packages/microsoft.aspnetcore.app.ref/9.0.11/microsoft.aspnetcore.app.ref.9.0.11.nupkg.sha512",
+    "/home/adam/.nuget/packages/microsoft.netcore.app.host.linux-x64/9.0.11/microsoft.netcore.app.host.linux-x64.9.0.11.nupkg.sha512"
+  ],
   "logs": []
 }
