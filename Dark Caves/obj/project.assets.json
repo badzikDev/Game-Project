@@ -13,11 +13,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/home/adam/RiderProjects/Game Project/Game Project/Game Project.csproj",
-      "projectName": "Game Project",
-      "projectPath": "/home/adam/RiderProjects/Game Project/Game Project/Game Project.csproj",
+      "projectUniqueName": "/home/adam/RiderProjects/Game Project/Dark Caves/Dark Caves.csproj",
+      "projectName": "Dark Caves",
+      "projectPath": "/home/adam/RiderProjects/Game Project/Dark Caves/Dark Caves.csproj",
       "packagesPath": "/home/adam/.nuget/packages/",
-      "outputPath": "/home/adam/RiderProjects/Game Project/Game Project/obj/",
+      "outputPath": "/home/adam/RiderProjects/Game Project/Dark Caves/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/home/adam/.nuget/NuGet/NuGet.Config"

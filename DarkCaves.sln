@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Game Project", "Game Project\Game Project.csproj", "{5D27C19C-23E2-4413-BD5D-CB4F7B9FE51F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dark Caves", "Dark Caves\Dark Caves.csproj", "{5D27C19C-23E2-4413-BD5D-CB4F7B9FE51F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
