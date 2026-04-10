@@ -2,6 +2,7 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Text.Json;
+using System.Text.Json.Serialization; 
 using System.Threading;
 
 public enum TridaPostavy { Warrior, Archer, Mage }
@@ -9,7 +10,10 @@ public enum TridaPostavy { Warrior, Archer, Mage }
 public class Hrac
 {
     public string Jmeno { get; set; }
+
+    [JsonConverter(typeof(JsonStringEnumConverter))] 
     public TridaPostavy Trida { get; set; }
+    
     public int Level { get; set; } = 1;
     public int Zkusenosti { get; set; } = 0;
     public int Zdravi { get; set; }
@@ -86,7 +90,9 @@ public class HerniEngine
 
         while (nepritelHP > 0 && hrac.Zdravi > 0)
         {
-            Console.WriteLine($"\n{hrac.Jmeno}: {hrac.Zdravi} HP | {hrac.Energie} E | 1. Útok | 2. Obrana | 3. Lektvar");
+            // Fixed: Added Enemy HP display back here
+            Console.WriteLine($"\nNEPŘÍTEL: {jmenoNepritele} | HP: {nepritelHP}");
+            Console.WriteLine($"{hrac.Jmeno}: {hrac.Zdravi} HP | {hrac.Energie} E | 1. Útok | 2. Obrana | 3. Lektvar");
             string akce = Console.ReadLine();
             bool hracSeBrani = (akce == "2");
 
