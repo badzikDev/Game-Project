@@ -32,7 +32,19 @@ public class Hrac
         Trida = trida;
         if (trida == TridaPostavy.Warrior) { MaxZdravi = 150; MaxEnergie = 40; Utok = 12; Inventar.Add("Tupý meč"); }
         else if (trida == TridaPostavy.Archer) { MaxZdravi = 100; MaxEnergie = 70; Utok = 18; Inventar.Add("Krátký luk"); }
-        else { MaxZdravi = 80; MaxEnergie = 100; Utok = 25; Inventar.Add("Dřevěná hůl"); }
+        else if (trida == TridaPostavy.Mage)
+        {
+            MaxZdravi = 80;
+            MaxEnergie = 100;
+            Utok = 25;
+            Inventar.Add("Dřevěná hůl");
+        }
+        else
+        {
+            MaxZdravi = 0;
+            MaxEnergie = 0;
+            Utok = 0;
+        }
         Zdravi = MaxZdravi;
         Energie = MaxEnergie;
     }
@@ -63,7 +75,27 @@ public class HerniEngine
             string jmeno = Console.ReadLine();
             Console.WriteLine("Vyber třídu: 1. Bojovník, 2. Lukostřelec, 3. Mág");
             string v = Console.ReadLine();
-            hrac = new Hrac(jmeno, v == "2" ? TridaPostavy.Archer : v == "3" ? TridaPostavy.Mage : TridaPostavy.Warrior);
+            TridaPostavy zvolenaTrida;
+
+            if (v == "1")
+            {
+                zvolenaTrida = TridaPostavy.Warrior;
+            }
+            else if (v == "2")
+            {
+                zvolenaTrida = TridaPostavy.Archer;
+            }
+            else if (v == "3")
+            {
+                zvolenaTrida = TridaPostavy.Mage;
+            }
+            else
+            {
+                Console.WriteLine("Neplatné číslo");
+                return;
+            }
+
+            hrac = new Hrac(jmeno, zvolenaTrida);
         }
         else hrac = nactenyHrac;
         HlavniSmycka();
@@ -90,7 +122,6 @@ public class HerniEngine
 
         while (nepritelHP > 0 && hrac.Zdravi > 0)
         {
-            // Fixed: Added Enemy HP display back here
             Console.WriteLine($"\nNEPŘÍTEL: {jmenoNepritele} | HP: {nepritelHP}");
             Console.WriteLine($"{hrac.Jmeno}: {hrac.Zdravi} HP | {hrac.Energie} E | 1. Útok | 2. Obrana | 3. Lektvar");
             string akce = Console.ReadLine();
