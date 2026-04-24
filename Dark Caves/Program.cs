@@ -23,6 +23,7 @@ public class Hrac
     public int Penize { get; set; } = 50;
     public int Utok { get; set; }
     public int Lektvary { get; set; } = 1;
+    public int ChargeCounter { get; set; } = 0;
     public List<string> Inventar { get; set; } = new List<string>();
 
     public Hrac() { }
@@ -56,7 +57,7 @@ public class Hrac
                     (Trida == TridaPostavy.Mage && (predmet.Contains("hůl") || predmet.Contains("kniha")));
 
         if (muze) { Inventar.Add(predmet); Console.WriteLine($"Našel jsi: {predmet}!"); }
-        else { Penize += 15; Console.WriteLine($"Našel jsi {predmet}, ale neumíš to použít. Prodáno za 15zl."); }
+        else { Penize += 15; Console.WriteLine($"Našel jsi {predmet}, ale neumíš to použít. Prodáno za 15p"); }
     }
 }
 
@@ -77,23 +78,10 @@ public class HerniEngine
             string v = Console.ReadLine();
             TridaPostavy zvolenaTrida;
 
-            if (v == "1")
-            {
-                zvolenaTrida = TridaPostavy.Warrior;
-            }
-            else if (v == "2")
-            {
-                zvolenaTrida = TridaPostavy.Archer;
-            }
-            else if (v == "3")
-            {
-                zvolenaTrida = TridaPostavy.Mage;
-            }
-            else
-            {
-                Console.WriteLine("Neplatné číslo");
-                return;
-            }
+            if (v == "1") zvolenaTrida = TridaPostavy.Warrior;
+            else if (v == "2") zvolenaTrida = TridaPostavy.Archer;
+            else if (v == "3") zvolenaTrida = TridaPostavy.Mage;
+            else { Console.WriteLine("Neplatné číslo"); return; }
 
             hrac = new Hrac(jmeno, zvolenaTrida);
         }
@@ -123,18 +111,40 @@ public class HerniEngine
         while (nepritelHP > 0 && hrac.Zdravi > 0)
         {
             Console.WriteLine($"\nNEPŘÍTEL: {jmenoNepritele} | HP: {nepritelHP}");
-            Console.WriteLine($"{hrac.Jmeno}: {hrac.Zdravi} HP | {hrac.Energie} E | 1. Útok | 2. Obrana | 3. Lektvar");
+            Console.WriteLine($"{hrac.Jmeno}: {hrac.Zdravi} HP | {hrac.Energie} E | 1. Útok | 2. Obrana | 3. Lektvar | 4. Speciální Útok ({hrac.ChargeCounter}/3)");
             string akce = Console.ReadLine();
             bool hracSeBrani = (akce == "2");
 
             if (akce == "1") { 
                 int dmg = hrac.Energie >= 15 ? rnd.Next(hrac.Utok - 3, hrac.Utok + 7) : 3;
-                hrac.Energie = Math.Max(0, hrac.Energie - 15); nepritelHP -= dmg; Console.WriteLine($"Zasáhl jsi za {dmg}!"); 
+                hrac.Energie = Math.Max(0, hrac.Energie - 15); 
+                nepritelHP -= dmg; 
+                hrac.ChargeCounter++;
+                Console.WriteLine($"Zasáhl jsi za {dmg}!"); 
             }
             else if (akce == "3" && hrac.Lektvary > 0) { hrac.Zdravi = Math.Min(hrac.MaxZdravi, hrac.Zdravi + 40); hrac.Lektvary--; }
+            else if (akce == "4") 
+            {
+                int cost = hrac.MaxEnergie / 2;
+                if (hrac.ChargeCounter >= 3 && hrac.Energie >= cost) {
+                    int dmg = 0;
+                    string nazevSpecialky = "";
+                    switch (hrac.Trida) {
+                        case TridaPostavy.Warrior: dmg = hrac.Utok * 2 + 10; nazevSpecialky = "Těžký Úder"; break;
+                        case TridaPostavy.Archer: dmg = hrac.Utok * 2 + 5; nazevSpecialky = "Zlatý Šíp"; break;
+                        case TridaPostavy.Mage: dmg = hrac.Utok * 3; nazevSpecialky = "Ohnivá koule"; break;
+                    }
+                    nepritelHP -= dmg;
+                    hrac.Energie -= cost;
+                    hrac.ChargeCounter = 0;
+                    Console.WriteLine($"POUŽIL JSI {nazevSpecialky.ToUpper()}! Udělil jsi {dmg} poškození!");
+                } else {
+                    Console.WriteLine($"Speciální útok není nabitý nebo nemáš dost energie ({cost} E)!");
+                }
+            }
             else if (hracSeBrani) hrac.Energie = Math.Min(hrac.MaxEnergie, hrac.Energie + 20);
 
-            if (nepritelHP > 0) {
+            if (nepritelHP > 0 && akce != "4" && akce != "3") { 
                 int dmgN = rnd.Next(nepritelUtok - 3, nepritelUtok + 3);
                 if (hracSeBrani) dmgN /= 4;
                 hrac.Zdravi -= dmgN; Console.WriteLine($"{jmenoNepritele} tě zasáhl za {dmgN}!");
@@ -142,6 +152,7 @@ public class HerniEngine
 
             if (hrac.Zdravi <= 0) {
                 int pen = hrac.Penize / 4; hrac.Penize -= pen; hrac.Zdravi = hrac.MaxZdravi / 2;
+                hrac.ChargeCounter = 0; 
                 Console.WriteLine($"\nPADL JSI! Ztratil jsi {pen} peněz. Probouzíš se s polovinou HP.");
                 Console.ReadKey(); return;
             }
