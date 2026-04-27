@@ -2,7 +2,7 @@
 using System.IO;
 using System.Collections.Generic;
 using System.Text.Json;
-using System.Text.Json.Serialization; 
+using System.Text.Json.Serialization;
 using System.Threading;
 
 public enum TridaPostavy { Warrior, Archer, Mage }
@@ -11,7 +11,7 @@ public class Hrac
 {
     public string Jmeno { get; set; }
 
-    [JsonConverter(typeof(JsonStringEnumConverter))] 
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public TridaPostavy Trida { get; set; }
     
     public int Level { get; set; } = 1;
@@ -39,12 +39,6 @@ public class Hrac
             MaxEnergie = 100;
             Utok = 25;
             Inventar.Add("Dřevěná hůl");
-        }
-        else
-        {
-            MaxZdravi = 0;
-            MaxEnergie = 0;
-            Utok = 0;
         }
         Zdravi = MaxZdravi;
         Energie = MaxEnergie;
@@ -96,22 +90,51 @@ public class HerniEngine
         {
             Console.Clear();
             Console.WriteLine($"--- {hrac.Jmeno} ({hrac.Trida}) | LVL: {hrac.Level} | HP: {hrac.Zdravi}/{hrac.MaxZdravi} | E: {hrac.Energie}/{hrac.MaxEnergie} ---");
-            Console.WriteLine("1. Jít bojovat | 2. Inventář | 3. Uložit | 4. Odejít");
+            Console.WriteLine("1. Lokace | 2. Inventář | 3. Uložit | 4. Odejít");
             string volba = Console.ReadLine();
-            if (volba == "1") Boj(); else if (volba == "2") Inventar(); else if (volba == "3") { Ulozit(); hrajeme = false; } else if (volba == "4") hrajeme = false;
+            if (volba == "1") VyberLokace(); else if (volba == "2") Inventar(); else if (volba == "3") { Ulozit(); hrajeme = false; } else if (volba == "4") hrajeme = false;
         }
     }
 
-    private void Boj()
+    private void VyberLokace()
     {
-        int nepritelHP = 40 + (hrac.Level * 15), nepritelUtok = 8 + (hrac.Level * 4);
-        string jmenoNepritele = (new[] { "Vzteklý vlk", "Skřet", "Troll", "Přízrak" })[rnd.Next(4)];
+        Console.Clear();
+        Console.WriteLine("Vyber lokaci:");
+        Console.WriteLine("1. Les (LVL 0+)");
+        Console.WriteLine("2. Jeskyně (LVL 3+)");
+        Console.WriteLine("3. Hrad (LVL 5+)");
+        string volba = Console.ReadLine();
+
+        if (volba == "1") Boj(1);
+        else if (volba == "2" && hrac.Level >= 3) Boj(2);
+        else if (volba == "3" && hrac.Level >= 5) Boj(3);
+        else { Console.WriteLine("Lokace je zamčená nebo neexistuje!"); Console.ReadKey(); }
+    }
+
+    private void Boj(int diff)
+    {
+        int nepritelHP, nepritelUtok;
+        string jmenoNepritele;
+
+        if (diff == 3)
+        {
+            jmenoNepritele = "Vlkodlačí král";
+            nepritelHP = 300;
+            nepritelUtok = 35;
+        }
+        else
+        {
+            nepritelHP = (40 + (hrac.Level * 15)) * diff;
+            nepritelUtok = (8 + (hrac.Level * 4)) * diff;
+            jmenoNepritele = (new[] { "Vzteklý vlk", "Skřet", "Troll", "Přízrak" })[rnd.Next(4)];
+        }
+
         Console.Clear(); Console.WriteLine($"!!! SOUBOJ: {jmenoNepritele} !!!");
 
         while (nepritelHP > 0 && hrac.Zdravi > 0)
         {
             Console.WriteLine($"\nNEPŘÍTEL: {jmenoNepritele} | HP: {nepritelHP}");
-            Console.WriteLine($"{hrac.Jmeno}: {hrac.Zdravi} HP | {hrac.Energie} E | 1. Útok | 2. Obrana | 3. Lektvar | 4. Speciální Útok ({hrac.ChargeCounter}/3)");
+            Console.WriteLine($"{hrac.Jmeno}: {hrac.Zdravi} HP | {hrac.Energie} E | 1. Útok | 2. Obrana | 3. Lektvar | 4. Speciální ({hrac.ChargeCounter}/3)");
             string akce = Console.ReadLine();
             bool hracSeBrani = (akce == "2");
 
@@ -128,16 +151,14 @@ public class HerniEngine
                 int cost = hrac.MaxEnergie / 2;
                 if (hrac.ChargeCounter >= 3 && hrac.Energie >= cost) {
                     int dmg = 0;
-                    string nazevSpecialky = "";
-                    switch (hrac.Trida) {
-                        case TridaPostavy.Warrior: dmg = hrac.Utok * 2 + 10; nazevSpecialky = "Těžký Úder"; break;
-                        case TridaPostavy.Archer: dmg = hrac.Utok * 2 + 5; nazevSpecialky = "Zlatý Šíp"; break;
-                        case TridaPostavy.Mage: dmg = hrac.Utok * 3; nazevSpecialky = "Ohnivá koule"; break;
-                    }
+                    if (hrac.Trida == TridaPostavy.Warrior) dmg = hrac.Utok * 2 + 10;
+                    else if (hrac.Trida == TridaPostavy.Archer) dmg = hrac.Utok * 2 + 5;
+                    else dmg = hrac.Utok * 3;
+                    
                     nepritelHP -= dmg;
                     hrac.Energie -= cost;
                     hrac.ChargeCounter = 0;
-                    Console.WriteLine($"POUŽIL JSI {nazevSpecialky.ToUpper()}! Udělil jsi {dmg} poškození!");
+                    Console.WriteLine($"POUŽIL JSI SPECIÁLNÍ ÚTOK! Udělil jsi {dmg} poškození!");
                 } else {
                     Console.WriteLine($"Speciální útok není nabitý nebo nemáš dost energie ({cost} E)!");
                 }
@@ -158,7 +179,9 @@ public class HerniEngine
             }
         }
         if (nepritelHP <= 0) {
-            hrac.Penize += 20 + (hrac.Level * 10); hrac.Zkusenosti += 35;
+            int mult = diff == 3 ? 5 : diff;
+            hrac.Penize += (20 + (hrac.Level * 10)) * mult;
+            hrac.Zkusenosti += 35 * mult;
             if (rnd.Next(100) < 30) hrac.PridatLoot((new[] { "Ostrý meč", "Dlouhý luk", "Magická hůl" })[rnd.Next(3)]);
             if (hrac.Zkusenosti >= 100) LevelUp();
         }
