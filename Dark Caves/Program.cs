@@ -134,7 +134,7 @@ public class HerniEngine
         while (nepritelHP > 0 && hrac.Zdravi > 0)
         {
             Console.WriteLine($"\nNEPŘÍTEL: {jmenoNepritele} | HP: {nepritelHP}");
-            Console.WriteLine($"{hrac.Jmeno}: {hrac.Zdravi} HP | {hrac.Energie} E | 1. Útok | 2. Obrana | 3. Lektvar | 4. Speciální ({hrac.ChargeCounter}/3)");
+            Console.WriteLine($"{hrac.Jmeno}: {hrac.Zdravi} HP | {hrac.Energie} E | 1. Útok | 2. Obrana | 3. Lektvar ({hrac.Lektvary}) | 4. Speciální ({hrac.ChargeCounter}/3)");
             string akce = Console.ReadLine();
             bool hracSeBrani = (akce == "2");
 
@@ -179,6 +179,9 @@ public class HerniEngine
             }
         }
         if (nepritelHP <= 0) {
+            int lektvaryDrop = rnd.Next(1, 3);
+            hrac.Lektvary += lektvaryDrop;
+            Console.WriteLine($"Nepřítel upustil {lektvaryDrop} lektvary!");
             int mult = diff == 3 ? 5 : diff;
             hrac.Penize += (20 + (hrac.Level * 10)) * mult;
             hrac.Zkusenosti += 35 * mult;
@@ -195,7 +198,13 @@ public class HerniEngine
         Console.WriteLine("!!! LEVEL UP !!!");
     }
 
-    private void Inventar() { Console.Clear(); hrac.Inventar.ForEach(v => Console.WriteLine("- " + v)); Console.ReadKey(); }
+    private void Inventar() { 
+        Console.Clear(); 
+        Console.WriteLine($"--- INVENTÁŘ ---");
+        Console.WriteLine($"Peníze: {hrac.Penize} | Lektvary: {hrac.Lektvary}");
+        hrac.Inventar.ForEach(v => Console.WriteLine("- " + v)); 
+        Console.ReadKey(); 
+    }
     private void Ulozit() { File.WriteAllText(savePath, JsonSerializer.Serialize(hrac)); }
 }
 
