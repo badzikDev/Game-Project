@@ -142,7 +142,7 @@ public class HerniEngine
                 int dmg = hrac.Energie >= 15 ? rnd.Next(hrac.Utok - 3, hrac.Utok + 7) : 3;
                 hrac.Energie = Math.Max(0, hrac.Energie - 15); 
                 nepritelHP -= dmg; 
-                hrac.ChargeCounter++;
+                if (hrac.ChargeCounter < 3) hrac.ChargeCounter++;
                 Console.WriteLine($"Zasáhl jsi za {dmg}!"); 
             }
             else if (akce == "3" && hrac.Lektvary > 0) { hrac.Zdravi = Math.Min(hrac.MaxZdravi, hrac.Zdravi + 40); hrac.Lektvary--; }
