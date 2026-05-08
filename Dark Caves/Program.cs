@@ -13,7 +13,7 @@ public class ItemStats {
     public int EnergyBonus;
     public int SellPrice;
     public string Description;
-    public string Category; // Pro určení třídy
+    public string Category;
 }
 
 public class Hrac
@@ -21,7 +21,6 @@ public class Hrac
     public string Jmeno { get; set; }
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public TridaPostavy Trida { get; set; }
-    
     public int Level { get; set; } = 1;
     public int Zkusenosti { get; set; } = 0;
     public int Zdravi { get; set; }
@@ -33,7 +32,6 @@ public class Hrac
     public int Lektvary { get; set; } = 1;
     public int ChargeCounter { get; set; } = 0;
     public List<string> Inventar { get; set; } = new List<string>();
-    
     public string Zbran { get; set; } = "Nic";
     public string Brneni { get; set; } = "Hadry";
     public string Doplnek { get; set; } = "Nic";
@@ -148,9 +146,7 @@ public class HerniEngine
                         if (oldItem != "Nic" && oldItem != "Hadry") hrac.Inventar.Add(oldItem);
                         hrac.Inventar.RemoveAt(idx - 1);
                         Console.WriteLine("Vybaveno!");
-                    } else {
-                        Console.WriteLine("Tento předmět tvá třída nemůže používat!");
-                    }
+                    } else { Console.WriteLine("Tento předmět tvá třída nemůže používat!"); }
                 } else if (akce == "2") { hrac.Penize += stats.SellPrice; hrac.Inventar.RemoveAt(idx - 1); Console.WriteLine($"Prodáno za {stats.SellPrice}p!"); }
                 else if (akce == "3") { Console.WriteLine($"Popis: {stats.Description}"); }
                 Console.ReadKey();
@@ -169,15 +165,15 @@ public class HerniEngine
     private void Boj(int diff)
     {
         int nepritelHP = (40 + (hrac.Level * 15)) * diff;
+        int nepritelMaxHP = nepritelHP;
         int nepritelUtok = (8 + (hrac.Level * 4)) * diff;
         string jmenoNepritele = (new[] { "Vzteklý vlk", "Skřet", "Troll", "Přízrak" })[rnd.Next(4)];
-        if (diff == 3) { jmenoNepritele = "Vlkodlačí král"; nepritelHP = 300; nepritelUtok = 35; }
+        if (diff == 3) { jmenoNepritele = "Vlkodlačí král"; nepritelHP = 350; nepritelMaxHP = 350; nepritelUtok = 35; }
         
-        Console.Clear(); Console.WriteLine($"!!! SOUBOJ !!!");
+        Console.Clear(); Console.WriteLine($"!!! SOUBOJ: {jmenoNepritele} !!!");
         while (nepritelHP > 0 && hrac.Zdravi > 0) {
             bool enemyCanAttack = true; 
-            
-            Console.WriteLine($"\nNEPŘÍTEL: {jmenoNepritele} | HP: {nepritelHP} | TVÉ HP: {hrac.Zdravi}/{GetCurrentMaxHp()} | E: {hrac.Energie}/{GetCurrentMaxEnergy()}");
+            Console.WriteLine($"\n{jmenoNepritele.ToUpper()}: {nepritelHP}/{nepritelMaxHP} HP | TVÉ HP: {hrac.Zdravi}/{GetCurrentMaxHp()} | E: {hrac.Energie}/{GetCurrentMaxEnergy()}");
             Console.WriteLine($"1. Útok (10E) | 2. Obrana (+15E) | 3. Lektvar ({hrac.Lektvary}) | 4. Speciální ({hrac.ChargeCounter}/3)");
             string akce = Console.ReadLine();
             
@@ -188,49 +184,65 @@ public class HerniEngine
                     nepritelHP -= dmg; 
                     if (hrac.ChargeCounter < 3) hrac.ChargeCounter++; 
                     Console.WriteLine($"Zasáhl jsi za {dmg}!"); 
-                } else {
-                    Console.WriteLine("Nemáš dost energie na útok!");
-                }
+                } else { Console.WriteLine("Málo energie!"); enemyCanAttack = false; }
             } 
-            else if (akce == "2") {
-                hrac.Energie = Math.Min(GetCurrentMaxEnergy(), hrac.Energie + 15);
-                Console.WriteLine("Bráníš se a regeneruješ 15 energie.");
-            }
-            else if (akce == "3" && hrac.Lektvary > 0) { 
-                hrac.Zdravi = Math.Min(GetCurrentMaxHp(), hrac.Zdravi + 40); 
-                hrac.Lektvary--; 
-                enemyCanAttack = false; 
-                Console.WriteLine("Vypil jsi lektvar a získal 40 HP!");
-            }
-            else if (akce == "4" && hrac.ChargeCounter >= 3) { 
-                int dmg = GetTotalDamage() * 3; 
-                nepritelHP -= dmg; 
-                hrac.ChargeCounter = 0; 
-                Console.WriteLine($"Speciální útok! {dmg} dmg!"); 
-            }
+            else if (akce == "2") { hrac.Energie = Math.Min(GetCurrentMaxEnergy(), hrac.Energie + 15); Console.WriteLine("Bráníš se..."); }
+            else if (akce == "3" && hrac.Lektvary > 0) { hrac.Zdravi = Math.Min(GetCurrentMaxHp(), hrac.Zdravi + 40); hrac.Lektvary--; Console.WriteLine("Léčíš se..."); }
+            else if (akce == "4" && hrac.ChargeCounter >= 3) { int dmg = GetTotalDamage() * 3; nepritelHP -= dmg; hrac.ChargeCounter = 0; Console.WriteLine($"SPECIÁLNÍ ÚTOK: {dmg}!"); }
             
             if (nepritelHP > 0 && enemyCanAttack) { 
-                int rawDmg = rnd.Next(nepritelUtok - 3, nepritelUtok + 3);
-                int finalDmg = Math.Max(1, rawDmg - GetArmorReduction());
-                hrac.Zdravi -= finalDmg;
-                Console.WriteLine($"{jmenoNepritele} tě zasáhl za {finalDmg} (Brnění snížilo {GetArmorReduction()} DMG)!");
+                TahNepritele(jmenoNepritele, nepritelUtok, ref nepritelHP, nepritelMaxHP);
             }
         }
-        if (nepritelHP <= 0) {
-            int lDrop = rnd.Next(1, 3); hrac.Lektvary += lDrop;
-            string[] loot = { "Ostrý meč", "Dlouhý luk", "Magická hůl", "Kožená zbroj", "Železná zbroj", "Prsten síly", "Amulet energie" };
-            string found = loot[rnd.Next(loot.Length)];
-            hrac.Inventar.Add(found);
-            
-            int xpGain = 35 * diff;
-            hrac.Zkusenosti += xpGain;
-            Console.WriteLine($"Vyhrál jsi! Našel jsi: {found}, {lDrop} lektvarů a získal {xpGain} XP.");
-            
-            if (hrac.Zkusenosti >= 100) { hrac.Level++; hrac.Zkusenosti = 0; hrac.BaseMaxZdravi += 25; hrac.Zdravi = GetCurrentMaxHp(); }
-        }
+        if (hrac.Zdravi > 0) VysledekBoje(diff);
         Console.ReadKey();
     }
-    private void Ulozit() { File.WriteAllText(savePath, JsonSerializer.Serialize(hrac)); }
+
+    private void TahNepritele(string jmeno, int sila, ref int jehoHP, int maxHP)
+    {
+        int sance = rnd.Next(1, 101);
+        switch (jmeno) {
+            case "Vzteklý vlk":
+                if (sance <= 30) { ZpusobDmgHracovi(sila / 2, "Vlk ti prokousl nohu (Krvácení)"); hrac.Energie = Math.Max(0, hrac.Energie - 8); }
+                else ZpusobDmgHracovi(sila, "Vlk zaútočil");
+                break;
+            case "Skřet":
+                if (sance <= 25) { jehoHP = Math.Min(maxHP, jehoHP + 20); Console.WriteLine("Skřet se napil divné medicíny a vyléčil se!"); }
+                else ZpusobDmgHracovi(sila, "Skřet tě sekl nožem");
+                break;
+            case "Troll":
+                if (sance <= 20) { int dmg = sila + 15; hrac.Zdravi -= dmg; Console.WriteLine($"Troll tě DRTIVĚ zasáhl za {dmg} (Ignoruje brnění!)"); }
+                else ZpusobDmgHracovi(sila, "Troll tě udeřil kyjem");
+                break;
+            case "Přízrak":
+                if (sance <= 40) { hrac.Energie = Math.Max(0, hrac.Energie - 15); jehoHP = Math.Min(maxHP, jehoHP + 10); Console.WriteLine("Přízrak ti vysál energii!"); }
+                else ZpusobDmgHracovi(sila - 5, "Přízrak tě mrazivě pohladil");
+                break;
+            case "Vlkodlačí král":
+                if (sance <= 25) { hrac.Energie = Math.Max(0, hrac.Energie - 20); Console.WriteLine("Boss zařval a ochromil tě!"); }
+                else if (sance > 80) { jehoHP = Math.Min(maxHP, jehoHP + 30); ZpusobDmgHracovi(sila, "Boss tě kousl a vyléčil se"); }
+                else ZpusobDmgHracovi(sila + 5, "Boss tě seknul drápy");
+                break;
+        }
+    }
+
+    private void ZpusobDmgHracovi(int rawDmg, string zprava) {
+        int finalDmg = Math.Max(1, rawDmg - GetArmorReduction());
+        hrac.Zdravi -= finalDmg;
+        Console.WriteLine($"{zprava} za {finalDmg} DMG!");
+    }
+
+    private void VysledekBoje(int diff) {
+        int lDrop = rnd.Next(1, 3); hrac.Lektvary += lDrop;
+        string[] loot = { "Ostrý meč", "Dlouhý luk", "Magická hůl", "Kožená zbroj", "Železná zbroj", "Prsten síly", "Amulet energie" };
+        string found = loot[rnd.Next(loot.Length)];
+        hrac.Inventar.Add(found);
+        int xpGain = 35 * diff; hrac.Zkusenosti += xpGain;
+        Console.WriteLine($"Vítězství! Našel jsi {found}, {lDrop} lektvary a získal {xpGain} XP.");
+        if (hrac.Zkusenosti >= 100) { hrac.Level++; hrac.Zkusenosti = 0; hrac.BaseMaxZdravi += 25; hrac.Zdravi = GetCurrentMaxHp(); Console.WriteLine("LEVEL UP!"); }
+    }
+
+    private void Ulozit() { File.WriteAllText(savePath, JsonSerializer.Serialize(hrac)); Console.WriteLine("Hra uložena."); Console.ReadKey(); }
 }
 
 public class StartMenu
