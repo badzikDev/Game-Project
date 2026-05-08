@@ -7,13 +7,13 @@ using System.Text.Json.Serialization;
 public enum TridaPostavy { Warrior, Archer, Mage }
 
 public class ItemStats {
-    public int DmgBonus;
-    public int ArmorReduction;
-    public int HpBonus;
-    public int EnergyBonus;
-    public int SellPrice;
-    public string Description;
-    public string Category;
+    public int DmgBonus { get; set; }
+    public int ArmorReduction { get; set; }
+    public int HpBonus { get; set; }
+    public int EnergyBonus { get; set; }
+    public int SellPrice { get; set; }
+    public string Description { get; set; }
+    public string Category { get; set; }
 }
 
 public class Hrac
@@ -106,8 +106,11 @@ public class HerniEngine
             Console.WriteLine($"HP: {hrac.Zdravi}/{GetCurrentMaxHp()} | E: {hrac.Energie}/{GetCurrentMaxEnergy()}");
             Console.WriteLine("1. Lokace | 2. Inventář | 3. Loadout | 4. Uložit | 5. Odejít");
             string volba = Console.ReadLine();
-            if (volba == "1") VyberLokace(); else if (volba == "2") Inventar(); else if (volba == "3") Loadout();
-            else if (volba == "4") { Ulozit(); hrajeme = false; } else if (volba == "5") hrajeme = false;
+            if (volba == "1") VyberLokace(); 
+            else if (volba == "2") Inventar(); 
+            else if (volba == "3") Loadout();
+            else if (volba == "4") { Ulozit(); hrajeme = false; } 
+            else if (volba == "5") hrajeme = false;
         }
     }
 
@@ -195,6 +198,7 @@ public class HerniEngine
             }
         }
         if (hrac.Zdravi > 0) VysledekBoje(diff);
+        else Console.WriteLine("Byl jsi poražen...");
         Console.ReadKey();
     }
 
@@ -247,16 +251,47 @@ public class HerniEngine
 
 public class StartMenu
 {
+    private static string pravidla = @"
+=== PRAVIDLA HRY A JAK HRA FUNGUJE===
+1. Vyber si ze 3 class postavu, každá se liší energií, životama, a sílou útoku.
+2. Útok stojí 10 energie, Obrana ti 15 energie vrátí.
+3. Po 3 útocích můžeš použít SPECIÁLNÍ ÚTOK který stojí polovinu max energie.
+4. V inventáři si musíš předměty vybavit, aby se používali.
+5. Hru můžeš kdykoliv uložit v hlavním menu.
+6. Každý nepřítel má jiné schopnosti.
+7. V boji můžeš použít lektvar pokud máš málo života.
+";
+
     public void ShowMenu()
     {
-        Console.Clear();
-        Console.WriteLine("1. New Game | 2. Load | 3. Exit");
-        string c = Console.ReadLine();
-        HerniEngine e = new HerniEngine();
-        if (c == "1") e.Spustit();
-        else if (c == "2" && File.Exists("savegame.json")) e.Spustit(JsonSerializer.Deserialize<Hrac>(File.ReadAllText("savegame.json")));
-        else if (c == "3") return;
-        else ShowMenu();
+        while (true)
+        {
+            Console.Clear();
+            Console.WriteLine("=== RPG ADVENTURE ===");
+            Console.WriteLine("1. New Game | 2. Load | 3. Exit | 4. Rules");
+            string c = Console.ReadLine();
+            HerniEngine e = new HerniEngine();
+
+            if (c == "1") e.Spustit();
+            else if (c == "2")
+            {
+                if (File.Exists("savegame.json")) 
+                    e.Spustit(JsonSerializer.Deserialize<Hrac>(File.ReadAllText("savegame.json")));
+                else 
+                {
+                    Console.WriteLine("Savegame neexistuje!");
+                    Console.ReadKey();
+                }
+            }
+            else if (c == "3") break;
+            else if (c == "4")
+            {
+                Console.Clear();
+                Console.WriteLine(pravidla);
+                Console.WriteLine("\nStiskni libovolnou klávesu pro návrat...");
+                Console.ReadKey();
+            }
+        }
     }
 }
 
