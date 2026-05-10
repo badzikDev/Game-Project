@@ -24,6 +24,9 @@ Plánované Vylepšení:
 - Více typů nepřátel a lokací
 - Skill tree
 
+Časová náročnost:
+- okolo 30H
+
 Licence: 
 - Tento projekt je open-source a volně šiřitelný pro studijní účely.
 
